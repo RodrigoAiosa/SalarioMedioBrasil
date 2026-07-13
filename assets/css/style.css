@@ -1,0 +1,101 @@
+/* ==========================================================================
+   Estilo customizado — Dashboard Salário Médio por Estado no Brasil
+   ========================================================================== */
+
+.main .block-container {
+    padding-top: 1.5rem;
+    padding-bottom: 2rem;
+    max-width: 1200px;
+}
+
+/* Título principal bicolor (preto + azul), como no material de referência */
+.app-title {
+    font-weight: 900;
+    font-size: 2.6rem;
+    line-height: 1.1;
+    letter-spacing: -0.5px;
+    margin-bottom: 0.1rem;
+}
+.app-title .black-part {
+    color: #0B1F3A;
+}
+.app-title .blue-part {
+    color: #1E6FD9;
+}
+
+.app-subtitle {
+    font-weight: 800;
+    font-size: 1.25rem;
+    color: #0B1F3A;
+    margin-top: 0;
+    margin-bottom: 1.2rem;
+}
+.app-subtitle .highlight {
+    color: #1E6FD9;
+}
+
+/* Cards de métrica do Streamlit */
+[data-testid="stMetric"] {
+    background: #F2F6FC;
+    border: 1px solid #D9E6F7;
+    border-radius: 12px;
+    padding: 0.9rem 1rem;
+}
+[data-testid="stMetricLabel"] {
+    font-weight: 700;
+    color: #0B1F3A;
+}
+[data-testid="stMetricValue"] {
+    color: #1E6FD9;
+    font-weight: 800;
+}
+
+/* Legenda de faixas salariais */
+.legend-box {
+    border: 1px solid #D9E6F7;
+    border-radius: 12px;
+    padding: 1rem 1.2rem;
+    background: #FFFFFF;
+}
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 0.45rem;
+    font-size: 0.92rem;
+    color: #0B1F3A;
+}
+.legend-swatch {
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    flex-shrink: 0;
+    border: 1px solid rgba(0,0,0,0.08);
+}
+
+/* Rodapé com fonte de dados */
+.footer-note {
+    text-align: center;
+    color: #6B7A8F;
+    font-size: 0.85rem;
+    margin-top: 2rem;
+}
+
+/* Card de destaque "Média Brasil" no canto, estilo do print */
+.media-brasil-card {
+    border: 2px solid #1E6FD9;
+    border-radius: 14px;
+    padding: 0.8rem 1.2rem;
+    text-align: center;
+    background: #F2F6FC;
+}
+.media-brasil-card .label {
+    font-weight: 800;
+    color: #0B1F3A;
+    font-size: 0.95rem;
+}
+.media-brasil-card .value {
+    font-weight: 900;
+    color: #1E6FD9;
+    font-size: 1.6rem;
+}
