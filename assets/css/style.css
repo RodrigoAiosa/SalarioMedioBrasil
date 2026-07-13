@@ -1,101 +1,229 @@
 /* ==========================================================================
    Estilo customizado — Dashboard Salário Médio por Estado no Brasil
+   Landing-page style, tema escuro forçado (independente do tema do usuário)
    ========================================================================== */
 
-.main .block-container {
-    padding-top: 1.5rem;
-    padding-bottom: 2rem;
-    max-width: 1200px;
+:root {
+    --bg-base: #0B1220;
+    --bg-elevated: #111C33;
+    --bg-card: #141F38;
+    --border-soft: rgba(59, 140, 242, 0.18);
+    --text-primary: #F4F8FF;
+    --text-muted: #9FB0CC;
+    --accent: #3B8CF2;
+    --accent-strong: #1E6FD9;
+    --accent-glow: rgba(59, 140, 242, 0.35);
+    --positive: #34D399;
+    --negative: #F87171;
 }
 
-/* Título principal bicolor (preto + azul), como no material de referência */
+/* Força fundo escuro em toda a aplicação, independente do tema claro/escuro
+   selecionado pelo usuário no menu do Streamlit — visual de landing page. */
+[data-testid="stAppViewContainer"],
+[data-testid="stHeader"],
+.main, body {
+    background: radial-gradient(circle at 15% 0%, #142544 0%, var(--bg-base) 45%) !important;
+    color: var(--text-primary) !important;
+}
+
+[data-testid="stHeader"] {
+    background: transparent !important;
+}
+
+[data-testid="stSidebar"] {
+    background: var(--bg-elevated) !important;
+    border-right: 1px solid var(--border-soft);
+}
+[data-testid="stSidebar"] * {
+    color: var(--text-primary) !important;
+}
+
+.main .block-container {
+    padding-top: 2rem;
+    padding-bottom: 3rem;
+    max-width: 1280px;
+}
+
+/* --------------------------------------------------------------------
+   Hero / título
+   -------------------------------------------------------------------- */
+.hero-section {
+    padding: 0.5rem 0 1.6rem 0;
+}
+
 .app-title {
     font-weight: 900;
-    font-size: 2.6rem;
-    line-height: 1.1;
-    letter-spacing: -0.5px;
-    margin-bottom: 0.1rem;
-}
-.app-title .black-part {
-    color: #0B1F3A;
-}
-.app-title .blue-part {
-    color: #1E6FD9;
+    font-size: 3rem;
+    line-height: 1.05;
+    letter-spacing: -1px;
+    color: var(--text-primary) !important;
+    margin-bottom: 0.3rem;
 }
 
 .app-subtitle {
-    font-weight: 800;
-    font-size: 1.25rem;
-    color: #0B1F3A;
+    font-weight: 700;
+    font-size: 1.15rem;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
     margin-top: 0;
-    margin-bottom: 1.2rem;
+    margin-bottom: 0;
+    text-transform: uppercase;
 }
 .app-subtitle .highlight {
-    color: #1E6FD9;
+    color: var(--accent);
 }
 
-/* Cards de métrica do Streamlit */
+.hero-badge {
+    display: inline-block;
+    margin-top: 0.9rem;
+    padding: 0.35rem 0.9rem;
+    border-radius: 999px;
+    background: rgba(59, 140, 242, 0.12);
+    border: 1px solid var(--border-soft);
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+}
+
+/* --------------------------------------------------------------------
+   Cards de métrica em destaque (primeira linha, estilo landing page)
+   -------------------------------------------------------------------- */
 [data-testid="stMetric"] {
-    background: #F2F6FC;
-    border: 1px solid #D9E6F7;
-    border-radius: 12px;
-    padding: 0.9rem 1rem;
+    background: linear-gradient(160deg, var(--bg-card) 0%, var(--bg-elevated) 100%);
+    border: 1px solid var(--border-soft);
+    border-radius: 16px;
+    padding: 1.3rem 1.4rem;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+[data-testid="stMetric"]:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 32px rgba(59,140,242,0.18);
+    border-color: var(--accent);
 }
 [data-testid="stMetricLabel"] {
     font-weight: 700;
-    color: #0B1F3A;
+    color: var(--text-muted) !important;
+    text-transform: uppercase;
+    font-size: 0.78rem;
+    letter-spacing: 0.4px;
 }
 [data-testid="stMetricValue"] {
-    color: #1E6FD9;
+    color: var(--accent) !important;
     font-weight: 800;
+    font-size: 1.9rem !important;
+}
+[data-testid="stMetricDelta"] svg {
+    display: inline;
 }
 
-/* Legenda de faixas salariais */
+/* Destaque extra para o primeiro card (Média Brasil) — hero stat */
+.hero-row [data-testid="stMetric"]:nth-child(1) {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent-glow), 0 10px 30px rgba(59,140,242,0.15);
+}
+
+/* --------------------------------------------------------------------
+   Legenda de faixas salariais
+   -------------------------------------------------------------------- */
 .legend-box {
-    border: 1px solid #D9E6F7;
-    border-radius: 12px;
-    padding: 1rem 1.2rem;
-    background: #FFFFFF;
+    border: 1px solid var(--border-soft);
+    border-radius: 16px;
+    padding: 1.1rem 1.3rem;
+    background: var(--bg-card);
+}
+.legend-box b {
+    color: var(--text-primary);
 }
 .legend-item {
     display: flex;
     align-items: center;
     gap: 0.6rem;
-    margin-bottom: 0.45rem;
-    font-size: 0.92rem;
-    color: #0B1F3A;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--text-muted);
 }
 .legend-swatch {
     width: 18px;
     height: 18px;
-    border-radius: 4px;
+    border-radius: 5px;
     flex-shrink: 0;
-    border: 1px solid rgba(0,0,0,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
 }
 
-/* Rodapé com fonte de dados */
-.footer-note {
-    text-align: center;
-    color: #6B7A8F;
-    font-size: 0.85rem;
-    margin-top: 2rem;
-}
-
-/* Card de destaque "Média Brasil" no canto, estilo do print */
+/* --------------------------------------------------------------------
+   Card "Média Brasil" em destaque, ao lado da legenda
+   -------------------------------------------------------------------- */
 .media-brasil-card {
-    border: 2px solid #1E6FD9;
-    border-radius: 14px;
-    padding: 0.8rem 1.2rem;
+    border: 2px solid var(--accent-strong);
+    border-radius: 16px;
+    padding: 1rem 1.2rem;
     text-align: center;
-    background: #F2F6FC;
+    background: linear-gradient(160deg, rgba(59,140,242,0.14) 0%, var(--bg-card) 100%);
+    box-shadow: 0 0 0 1px var(--accent-glow);
 }
 .media-brasil-card .label {
     font-weight: 800;
-    color: #0B1F3A;
-    font-size: 0.95rem;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
 }
 .media-brasil-card .value {
     font-weight: 900;
-    color: #1E6FD9;
-    font-size: 1.6rem;
+    color: var(--accent);
+    font-size: 1.7rem;
+    margin-top: 0.2rem;
+}
+
+/* --------------------------------------------------------------------
+   Abas (tabs)
+   -------------------------------------------------------------------- */
+[data-testid="stTabs"] button {
+    color: var(--text-muted) !important;
+    font-weight: 700;
+}
+[data-testid="stTabs"] button[aria-selected="true"] {
+    color: var(--accent) !important;
+}
+[data-testid="stTabs"] [data-baseweb="tab-highlight"] {
+    background-color: var(--accent) !important;
+}
+[data-testid="stTabs"] [data-baseweb="tab-border"] {
+    background-color: rgba(255,255,255,0.06) !important;
+}
+
+/* --------------------------------------------------------------------
+   Dataframes / tabelas
+   -------------------------------------------------------------------- */
+[data-testid="stDataFrame"] {
+    border: 1px solid var(--border-soft);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+/* --------------------------------------------------------------------
+   Expander
+   -------------------------------------------------------------------- */
+[data-testid="stExpander"] {
+    background: var(--bg-card);
+    border: 1px solid var(--border-soft);
+    border-radius: 12px;
+}
+
+/* --------------------------------------------------------------------
+   Rodapé
+   -------------------------------------------------------------------- */
+.footer-note {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin-top: 2.5rem;
+    opacity: 0.8;
+}
+
+/* Caption text (st.caption) mais legível no fundo escuro */
+[data-testid="stCaptionContainer"], .stCaption, small {
+    color: var(--text-muted) !important;
 }

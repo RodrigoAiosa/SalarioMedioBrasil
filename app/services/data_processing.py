@@ -166,3 +166,68 @@ def compute_summary_metrics(df: pd.DataFrame) -> dict:
         "maior_uf": {"sigla": maior["sigla"], "nome": maior["nome"], "valor": maior["rendimento_medio"]},
         "menor_uf": {"sigla": menor["sigla"], "nome": menor["nome"], "valor": menor["rendimento_medio"]},
     }
+
+
+_MESES_PT = {
+    1: "Jan", 2: "Fev", 3: "Mar", 4: "Abr", 5: "Mai", 6: "Jun",
+    7: "Jul", 8: "Ago", 9: "Set", 10: "Out", 11: "Nov", 12: "Dez",
+}
+# Mapeia o trimestre da PNAD Contínua para o mês final do trimestre (MesAno),
+# já que a pesquisa é trimestral, e não mensal.
+_TRIMESTRE_PARA_MES = {1: 3, 2: 6, 3: 9, 4: 12}
+
+
+def build_historico_dataframe(raw_historico: list[dict]) -> pd.DataFrame:
+    """
+    Constrói o DataFrame da série histórica nacional (nível Brasil) a partir
+    da resposta bruta da API SIDRA (Tabela 6407, N1), com colunas:
+
+        ano, trimestre, periodo_label ("Mar/2015"), data_ref (Timestamp),
+        rendimento_medio, var_mom (%QoQ), var_yoy (%)
+
+    A PNAD Contínua de rendimento é divulgada trimestralmente (não mensal);
+    por isso a variação "MoM" é calculada entre trimestres consecutivos
+    (equivalente a %QoQ) e rotulada como "Período (MesAno)" usando o último
+    mês de cada trimestre, para ficar no formato solicitado (ex.: "Mar/2024").
+    """
+    rows = _strip_sidra_header(raw_historico)
+
+    records = []
+    for row in rows:
+        codigo = str(row.get("D3C", ""))
+        if len(codigo) != 6:
+            continue
+        ano = int(codigo[:4])
+        trimestre = int(codigo[4:6])
+        valor = _safe_float(row.get("V"))
+        if valor is None or trimestre not in _TRIMESTRE_PARA_MES:
+            continue
+        mes = _TRIMESTRE_PARA_MES[trimestre]
+        records.append(
+            {
+                "ano": ano,
+                "trimestre": trimestre,
+                "mes": mes,
+                "data_ref": pd.Timestamp(year=ano, month=mes, day=1),
+                "rendimento_medio": valor,
+            }
+        )
+
+    df = pd.DataFrame.from_records(records)
+    if df.empty:
+        return df
+
+    df = df.sort_values("data_ref").reset_index(drop=True)
+    df["periodo_label"] = df.apply(lambda r: f"{_MESES_PT[r['mes']]}/{r['ano']}", axis=1)
+    df["var_mom"] = df["rendimento_medio"].pct_change(1) * 100
+    df["var_yoy"] = df["rendimento_medio"].pct_change(4) * 100
+
+    return df
+
+
+def filter_ultimos_anos(df_historico: pd.DataFrame, anos: int) -> pd.DataFrame:
+    """Filtra o DataFrame histórico para os últimos `anos` anos (a partir do período mais recente)."""
+    if df_historico.empty:
+        return df_historico
+    data_limite = df_historico["data_ref"].max() - pd.DateOffset(years=anos)
+    return df_historico[df_historico["data_ref"] > data_limite].reset_index(drop=True)

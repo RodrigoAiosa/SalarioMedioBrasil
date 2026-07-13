@@ -108,6 +108,10 @@ APP_TITLE = "Salário Médio da População por Estado no Brasil"
 APP_SUBTITLE = "Fonte: PNAD Contínua (IBGE) via API SIDRA"
 FONTE_LABEL = "Fonte: PNAD Contínua (IBGE) — dados em tempo real via API SIDRA"
 
+# Opções do filtro de janela histórica (em anos) exibido na aba "Histórico"
+ANOS_HISTORICO_OPCOES = [1, 2, 3, 5, 10]
+ANOS_HISTORICO_PADRAO = 5
+
 
 @dataclass(frozen=True)
 class Endpoints:
@@ -127,6 +131,14 @@ class Endpoints:
             f"{self.sidra_base}/values/t/{SIDRA_TABLE_RENDIMENTO_SETOR_UF}"
             f"/n3/all/v/{SIDRA_VAR_RENDIMENTO_SETOR}/p/{periodo}"
             f"/c{SIDRA_CLASSIFICACAO_SETOR}/all"
+        )
+
+    def rendimento_historico_brasil(self, periodo: str = "all") -> str:
+        """Série histórica (nível Brasil) do rendimento médio mensal — usada
+        na aba de Histórico para calcular variações %MoM/%QoQ e %YoY."""
+        return (
+            f"{self.sidra_base}/values/t/{SIDRA_TABLE_RENDIMENTO_UF}"
+            f"/n1/1/v/{SIDRA_VAR_RENDIMENTO_MEDIO}/p/{periodo}/c58/allxt"
         )
 
     def malha_uf_geojson(self) -> str:

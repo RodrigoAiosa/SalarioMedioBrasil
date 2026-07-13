@@ -123,6 +123,16 @@ def get_rendimento_medio_por_setor_uf(periodo: str = "last") -> list[dict]:
     return _fetch_with_fallback(url, cache_name="rendimento_setor_uf")
 
 
+def get_serie_historica_rendimento_brasil(periodo: str = "all") -> list[dict]:
+    """
+    Retorna a série histórica (nível Brasil) do rendimento médio mensal
+    (Tabela SIDRA 6407, nível territorial N1). Usada na aba de Histórico
+    para exibir a tabela de Período x Variação (%MoM/%QoQ e %YoY).
+    """
+    url = ENDPOINTS.rendimento_historico_brasil(periodo)
+    return _fetch_with_fallback(url, cache_name="historico_rendimento_brasil")
+
+
 def get_estados_metadata() -> list[dict]:
     """Retorna metadados oficiais das UFs (API de Localidades do IBGE)."""
     url = ENDPOINTS.estados()

@@ -66,15 +66,59 @@ streamlit run app/main.py
 
 ## 🖱️ Interatividade
 
+- **Design estilo landing page**, tema escuro forçado (independente do tema
+  claro/escuro do navegador do usuário), título "SALÁRIOMÉDIO" em branco,
+  cards com efeito glass/glow e destaque na primeira linha.
 - Mapa coroplético do Brasil, cor por faixa de salário médio (igual à legenda do exemplo).
 - **Hover** em cada estado mostra:
   - Rendimento médio mensal da UF
   - **Top 3 setores de atividade** com maior média salarial naquele estado
-- Filtro de trimestre/ano na sidebar.
+- Filtro de região na sidebar (mapa).
 - Cards com Média Brasil, Maior UF, Menor UF.
+- **Aba "📈 Histórico (MoM / YoY)"**:
+  - Filtro de janela temporal (1, 2, 3, 5 ou 10 anos) na sidebar.
+  - Gráfico de evolução do rendimento médio nacional.
+  - Tabela com **Período (MêsAno)**, rendimento médio, **% QoQ** (variação
+    entre trimestres — a PNAD Contínua de rendimento é divulgada
+    trimestralmente, não mensalmente, então esta é a variação "MoM" aplicada
+    à granularidade real da pesquisa) e **% YoY** (mesmo trimestre do ano anterior).
 
 ## 🧪 Testes
 
 ```bash
 pytest tests/
 ```
+
+CI configurado em `.github/workflows/ci.yml` (roda os testes automaticamente
+em Python 3.11 e 3.12 a cada push/PR na branch `main`).
+
+## 🔄 Atualizando o cache local manualmente
+
+Em um ambiente com acesso à internet, é possível "congelar" uma foto atual
+dos dados do IBGE em `data/cache/`, útil antes de um deploy:
+
+```bash
+python scripts/refresh_cache.py
+```
+
+## 🐳 Rodando com Docker
+
+```bash
+docker compose up --build
+```
+
+Ou diretamente com Docker:
+
+```bash
+docker build -t salario-medio-dashboard .
+docker run -p 8501:8501 salario-medio-dashboard
+```
+
+Acesse em `http://localhost:8501`.
+
+## ☁️ Deploy
+
+- **Streamlit Community Cloud**: aponte para o repositório e defina
+  `app/main.py` como arquivo principal.
+- **Docker/Cloud Run/ECS/Azure Container Apps**: use a imagem gerada pelo
+  `Dockerfile` incluso.

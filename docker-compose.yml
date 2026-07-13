@@ -1,0 +1,14 @@
+services:
+  dashboard:
+    build: .
+    ports:
+      - "8501:8501"
+    environment:
+      - SIDRA_BASE_URL=https://apisidra.ibge.gov.br
+      - LOCALIDADES_BASE_URL=https://servicodados.ibge.gov.br/api/v1/localidades
+      - REQUEST_TIMEOUT=15
+      - USE_LOCAL_CACHE_FALLBACK=true
+      - CACHE_TTL_SECONDS=21600
+    volumes:
+      - ./data/cache:/srv/app/data/cache
+    restart: unless-stopped
