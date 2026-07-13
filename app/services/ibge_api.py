@@ -109,9 +109,14 @@ def get_rendimento_medio_por_uf(periodo: str = "last") -> list[dict]:
     Estrutura de retorno bruta da API SIDRA: lista de dicts, sendo o
     primeiro item o cabeçalho (descrição das colunas) e os demais os
     valores por UF.
+
+    O `periodo` pode ser "last" (trimestre mais recente) ou um código de
+    trimestre específico (ex.: "202004" = 4º trimestre de 2020), permitindo
+    consultar/filtrar por ano de referência.
     """
     url = ENDPOINTS.rendimento_uf(periodo)
-    return _fetch_with_fallback(url, cache_name="rendimento_uf")
+    cache_name = "rendimento_uf" if periodo == "last" else f"rendimento_uf_{periodo}"
+    return _fetch_with_fallback(url, cache_name=cache_name)
 
 
 def get_rendimento_medio_por_setor_uf(periodo: str = "last") -> list[dict]:
@@ -120,7 +125,8 @@ def get_rendimento_medio_por_setor_uf(periodo: str = "last") -> list[dict]:
     (Tabela SIDRA 5436) — usado para calcular o Top 3 de setores por estado.
     """
     url = ENDPOINTS.rendimento_setor_uf(periodo)
-    return _fetch_with_fallback(url, cache_name="rendimento_setor_uf")
+    cache_name = "rendimento_setor_uf" if periodo == "last" else f"rendimento_setor_uf_{periodo}"
+    return _fetch_with_fallback(url, cache_name=cache_name)
 
 
 def get_serie_historica_rendimento_brasil(periodo: str = "all") -> list[dict]:

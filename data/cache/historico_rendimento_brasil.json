@@ -531,5 +531,70 @@
     "D2N": "Rendimento médio mensal real",
     "D3C": "202404",
     "D3N": "4º trimestre 2024"
+  },
+  {
+    "NC": "1",
+    "NN": "Brasil",
+    "MC": "12",
+    "MN": "Reais",
+    "V": "3961.72",
+    "D1C": "1",
+    "D1N": "Brasil",
+    "D2C": "5933",
+    "D2N": "Rendimento médio mensal real",
+    "D3C": "202501",
+    "D3N": "1º trimestre 2025"
+  },
+  {
+    "NC": "1",
+    "NN": "Brasil",
+    "MC": "12",
+    "MN": "Reais",
+    "V": "4024.47",
+    "D1C": "1",
+    "D1N": "Brasil",
+    "D2C": "5933",
+    "D2N": "Rendimento médio mensal real",
+    "D3C": "202502",
+    "D3N": "2º trimestre 2025"
+  },
+  {
+    "NC": "1",
+    "NN": "Brasil",
+    "MC": "12",
+    "MN": "Reais",
+    "V": "4083.43",
+    "D1C": "1",
+    "D1N": "Brasil",
+    "D2C": "5933",
+    "D2N": "Rendimento médio mensal real",
+    "D3C": "202503",
+    "D3N": "3º trimestre 2025"
+  },
+  {
+    "NC": "1",
+    "NN": "Brasil",
+    "MC": "12",
+    "MN": "Reais",
+    "V": "4184.95",
+    "D1C": "1",
+    "D1N": "Brasil",
+    "D2C": "5933",
+    "D2N": "Rendimento médio mensal real",
+    "D3C": "202504",
+    "D3N": "4º trimestre 2025"
+  },
+  {
+    "NC": "1",
+    "NN": "Brasil",
+    "MC": "12",
+    "MN": "Reais",
+    "V": "4213.31",
+    "D1C": "1",
+    "D1N": "Brasil",
+    "D2C": "5933",
+    "D2N": "Rendimento médio mensal real",
+    "D3C": "202601",
+    "D3N": "1º trimestre 2026"
   }
 ]

@@ -112,6 +112,31 @@ FONTE_LABEL = "Fonte: PNAD Contínua (IBGE) — dados em tempo real via API SIDR
 ANOS_HISTORICO_OPCOES = [1, 2, 3, 5, 10]
 ANOS_HISTORICO_PADRAO = 5
 
+# Anos disponíveis no filtro "Ano de referência" (mapa + cards + hover).
+#
+# O ano mais recente é calculado dinamicamente a partir da data atual do
+# sistema (e não hardcoded), então o filtro sempre inclui o ano corrente
+# (ex.: 2026) — e mapeia esse ano para o período "last" da API SIDRA, que
+# retorna o trimestre mais atual efetivamente publicado pelo IBGE no momento
+# da consulta. Isso garante que a opção "mais recente" esteja **sempre
+# atualizada** automaticamente, sem precisar editar código a cada virada de ano.
+import datetime as _datetime
+
+ANO_MAIS_RECENTE = _datetime.date.today().year
+ANOS_DISPONIVEIS = list(range(ANO_MAIS_RECENTE, 2014, -1))  # ex.: 2026 -> 2015, decrescente
+
+
+def periodo_para_ano(ano: int) -> str:
+    """Converte um ano selecionado no filtro para o código de período da API SIDRA.
+
+    O ano mais recente sempre mapeia para "last" (sempre atualizado via API,
+    independente do ano corrente). Anos passados consultam o 4º trimestre
+    daquele ano especificamente (ex.: 2020 -> "202004").
+    """
+    if ano == ANO_MAIS_RECENTE:
+        return "last"
+    return f"{ano}04"
+
 
 @dataclass(frozen=True)
 class Endpoints:

@@ -3,7 +3,12 @@ from __future__ import annotations
 
 import streamlit as st
 
-from app.config.settings import ANOS_HISTORICO_OPCOES, ANOS_HISTORICO_PADRAO
+from app.config.settings import (
+    ANO_MAIS_RECENTE,
+    ANOS_DISPONIVEIS,
+    ANOS_HISTORICO_OPCOES,
+    ANOS_HISTORICO_PADRAO,
+)
 
 
 def render_sidebar() -> dict:
@@ -14,12 +19,13 @@ def render_sidebar() -> dict:
     with st.sidebar:
         st.markdown("### ⚙️ Filtros")
 
-        periodo_label = st.selectbox(
-            "Período de referência (mapa)",
-            options=["Último trimestre disponível"],
+        ano_selecionado = st.selectbox(
+            "📅 Ano de referência",
+            options=ANOS_DISPONIVEIS,
             index=0,
-            help="A API SIDRA permite consultar trimestres específicos; "
-            "por padrão exibimos sempre o mais recente disponível ('last').",
+            format_func=lambda a: f"{a} (mais recente)" if a == ANO_MAIS_RECENTE else str(a),
+            help="Ao selecionar um ano, o mapa, os cards de resumo e o Top 3 de "
+            "setores no hover são recalculados para o 4º trimestre daquele ano.",
         )
 
         regioes = st.multiselect(
@@ -47,7 +53,7 @@ def render_sidebar() -> dict:
         st.caption("Documentação da API: servicodados.ibge.gov.br/api/docs")
 
     return {
-        "periodo": periodo_label,
+        "ano": ano_selecionado,
         "regioes": regioes or None,
         "anos_historico": anos_historico,
     }

@@ -63,12 +63,26 @@ streamlit run app/main.py
 > indisponível (comum em ambientes com rede restrita), a aplicação usa
 > automaticamente um **cache local em `data/cache/`** com uma amostra de dados
 > compatível com o schema real da API, para que o dashboard nunca quebre.
+>
+> Para o filtro de **Ano de referência**, o cache local inclui um snapshot por
+> UF para cada ano de 2015 a 2023 (`rendimento_uf_<ano>04.json`), derivado
+> proporcionalmente da série histórica nacional real (fator de crescimento
+> trimestral) aplicado ao snapshot de 2024 — isso garante que o filtro
+> funcione mesmo offline. Em produção, com acesso à API, cada ano é consultado
+> ao vivo na Tabela SIDRA 6407 usando o código de período `<ano>04`.
 
 ## 🖱️ Interatividade
 
 - **Design estilo landing page**, tema escuro forçado (independente do tema
   claro/escuro do navegador do usuário), título "SALÁRIOMÉDIO" em branco,
   cards com efeito glass/glow e destaque na primeira linha.
+- **Filtro de Ano de referência** na sidebar: ao selecionar um ano (2015 até o
+  ano corrente, calculado dinamicamente pela data do sistema — ex.: 2026), o
+  mapa, os 3 cards de resumo (Média Brasil, Maior UF, Menor UF) e o Top 3
+  de setores no hover são **recalculados automaticamente**. A opção do ano
+  mais recente **sempre consulta a API ao vivo** (parâmetro `p=last` do SIDRA),
+  então nunca fica desatualizada — não é necessário editar código a cada
+  virada de ano/trimestre.
 - Mapa coroplético do Brasil, cor por faixa de salário médio (igual à legenda do exemplo).
 - **Hover** em cada estado mostra:
   - Rendimento médio mensal da UF
@@ -82,6 +96,20 @@ streamlit run app/main.py
     entre trimestres — a PNAD Contínua de rendimento é divulgada
     trimestralmente, não mensalmente, então esta é a variação "MoM" aplicada
     à granularidade real da pesquisa) e **% YoY** (mesmo trimestre do ano anterior).
+
+## 🐞 Correções aplicadas
+
+- **Hover trocado entre estados ao filtrar por região**: o filtro de região
+  reindexava o DataFrame do mapa (`reset_index`) mas não recalculava o texto
+  de hover na mesma ordem, fazendo com que, por exemplo, o hover do Rio de
+  Janeiro exibisse dados do Distrito Federal. Corrigido aplicando a mesma
+  máscara booleana simultaneamente ao DataFrame e ao texto de hover antes de
+  resetar os índices. Há um teste de regressão dedicado em
+  `tests/test_ibge_api.py::test_hover_text_permanece_alinhado_apos_filtro_regiao`.
+- **Escala de cores do mapa "estourada"**: o `zmax` do mapa usava o teto
+  genérico (99999) da última faixa da legenda, esmagando toda a escala real
+  de valores (2.720–6.845+) e deixando quase todos os estados com a mesma cor
+  clara. Corrigido para usar o mínimo/máximo reais dos dados carregados.
 
 ## 🧪 Testes
 

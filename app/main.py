@@ -21,7 +21,7 @@ from app.components.historico import render_historico_tab
 from app.components.map_view import render_choropleth_map
 from app.components.metrics import render_summary_metrics
 from app.components.sidebar import render_sidebar
-from app.config.settings import CSS_PATH, FONTE_LABEL
+from app.config.settings import CSS_PATH, FONTE_LABEL, periodo_para_ano
 from app.services import data_processing as dp
 from app.services import ibge_api
 from app.utils.geo import load_uf_geojson
@@ -43,10 +43,13 @@ def _inject_css() -> None:
 
 
 @st.cache_data(ttl=21600, show_spinner=False)
-def load_mapa_data() -> tuple:
-    """Busca e processa os dados do mapa (rendimento por UF + top setores)."""
-    raw_rendimento_uf = ibge_api.get_rendimento_medio_por_uf()
-    raw_rendimento_setor = ibge_api.get_rendimento_medio_por_setor_uf()
+def load_mapa_data(ano: int) -> tuple:
+    """Busca e processa os dados do mapa (rendimento por UF + top setores)
+    para o ano de referência selecionado. O cache do Streamlit é isolado
+    por valor de `ano`, então trocar o filtro recalcula tudo automaticamente."""
+    periodo = periodo_para_ano(ano)
+    raw_rendimento_uf = ibge_api.get_rendimento_medio_por_uf(periodo)
+    raw_rendimento_setor = ibge_api.get_rendimento_medio_por_setor_uf(periodo)
     geojson = load_uf_geojson()
 
     df = dp.build_rendimento_uf_dataframe(raw_rendimento_uf)
@@ -68,7 +71,7 @@ def render_header() -> None:
     st.markdown(
         """
         <div class="hero-section">
-            <div class="app-title">SALÁRIO MÉDIO</div>
+            <div class="app-title">SALÁRIOMÉDIO</div>
             <div class="app-subtitle">DA POPULAÇÃO POR ESTADO NO <span class="highlight">BRASIL</span></div>
             <div class="hero-badge">📊 Dados PNAD Contínua · IBGE · Atualizado via API SIDRA</div>
         </div>
@@ -101,27 +104,45 @@ def render_legend() -> None:
 
 
 def render_mapa_tab(filters: dict) -> None:
-    with st.spinner("Carregando dados da PNAD Contínua (IBGE)..."):
+    ano = filters.get("ano")
+    from app.config.settings import ANO_MAIS_RECENTE
+
+    with st.spinner(f"Carregando dados da PNAD Contínua (IBGE) para {ano}..."):
         try:
-            df, top_setores, hover_text, geojson, summary = load_mapa_data()
+            df, top_setores, hover_text, geojson, summary = load_mapa_data(ano)
         except ibge_api.IBGEAPIError as exc:
             st.error(
-                "Não foi possível carregar os dados do IBGE no momento, "
+                f"Não foi possível carregar os dados do IBGE para o ano {ano}, "
                 "e nenhum cache local foi encontrado.\n\n"
                 f"Detalhe técnico: {exc}"
             )
             st.stop()
 
     if df.empty:
-        st.warning("Nenhum dado de rendimento por UF foi retornado pela API.")
+        st.warning(f"Nenhum dado de rendimento por UF foi retornado pela API para {ano}.")
         st.stop()
 
+    trimestre_label = (
+        "trimestre mais recente disponível (consulta sempre ao vivo via API)"
+        if ano == ANO_MAIS_RECENTE
+        else "4º trimestre"
+    )
+    st.markdown(
+        f'<div class="hero-badge" style="margin-bottom:1rem;">📅 Exibindo dados de: '
+        f'<b>{ano}</b> — {trimestre_label}</div>',
+        unsafe_allow_html=True,
+    )
+
     df_filtered = df
+    hover_text_filtered = hover_text
     if filters.get("regioes"):
-        df_filtered = df[df["regiao"].isin(filters["regioes"])].reset_index(drop=True)
-        hover_text_filtered = hover_text.loc[df_filtered.index]
-    else:
-        hover_text_filtered = hover_text
+        # IMPORTANTE: usa a mesma máscara booleana para filtrar df e hover_text
+        # ANTES de resetar o índice — resetar df_filtered sozinho e depois usar
+        # `.loc[df_filtered.index]` no hover_text original causava desalinhamento
+        # (ex.: hover do Rio de Janeiro mostrando dados do Distrito Federal).
+        mask = df["regiao"].isin(filters["regioes"])
+        df_filtered = df[mask].reset_index(drop=True)
+        hover_text_filtered = hover_text[mask].reset_index(drop=True)
 
     st.markdown('<div class="hero-row">', unsafe_allow_html=True)
     render_summary_metrics(summary)
