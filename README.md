@@ -99,6 +99,14 @@ streamlit run app/main.py
 
 ## 🐞 Correções aplicadas
 
+- **`ImportError` ao importar `app.config.settings` no Streamlit Community Cloud**:
+  o módulo chamava `CACHE_DIR.mkdir(parents=True, exist_ok=True)` direto na
+  importação, sem tratamento de erro. Em algumas plataformas de deploy o
+  diretório do repositório é montado como **somente leitura**, e essa chamada
+  lançava `PermissionError`/`OSError` — como isso ocorre durante o próprio
+  `import`, o Streamlit exibe isso como `ImportError` na linha que importa o
+  módulo. Corrigido envolvendo a criação do diretório em `try/except OSError`
+  (a gravação de cache em `ibge_api.py` já era protegida da mesma forma).
 - **Hover trocado entre estados ao filtrar por região**: o filtro de região
   reindexava o DataFrame do mapa (`reset_index`) mas não recalculava o texto
   de hover na mesma ordem, fazendo com que, por exemplo, o hover do Rio de
@@ -110,6 +118,25 @@ streamlit run app/main.py
   genérico (99999) da última faixa da legenda, esmagando toda a escala real
   de valores (2.720–6.845+) e deixando quase todos os estados com a mesma cor
   clara. Corrigido para usar o mínimo/máximo reais dos dados carregados.
+
+## ☁️ Troubleshooting no Streamlit Community Cloud
+
+Se o app não subir no Streamlit Cloud, confira nesta ordem:
+
+1. **Reboot completo do app** — no menu "⋮ → Reboot app", para limpar módulos
+   Python em cache de um deploy anterior (comum após atualizar arquivos).
+2. **Confirme que TODOS os arquivos foram enviados ao GitHub**, inclusive os
+   `__init__.py` vazios (`app/__init__.py`, `app/config/__init__.py`,
+   `app/services/__init__.py`, `app/components/__init__.py`,
+   `app/utils/__init__.py`) — sem eles, `app` não é reconhecido como pacote
+   Python. Rode `git status` / `git ls-files app/` localmente para checar.
+3. **`requirements.txt` precisa estar na raiz do repositório** (mesmo nível
+   do arquivo `README.md`), não dentro de `app/`.
+4. **Main file path**, ao configurar o app no Streamlit Cloud, deve ser
+   `app/main.py`.
+5. Veja os **logs completos** em "Manage app" (canto inferior direito) — a
+   mensagem exibida na tela é propositalmente resumida pelo Streamlit por
+   segurança, mas o log completo mostra o traceback real.
 
 ## 🧪 Testes
 

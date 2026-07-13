@@ -23,7 +23,15 @@ CACHE_DIR = DATA_DIR / "cache"
 ASSETS_DIR = BASE_DIR / "assets"
 CSS_PATH = ASSETS_DIR / "css" / "style.css"
 
-CACHE_DIR.mkdir(parents=True, exist_ok=True)
+try:
+    CACHE_DIR.mkdir(parents=True, exist_ok=True)
+except OSError:
+    # Em algumas plataformas de deploy (ex.: Streamlit Community Cloud) o
+    # diretório do repositório é montado como somente leitura. Isso não é
+    # fatal: os arquivos de cache já vêm versionados no repositório para
+    # leitura; só não será possível *gravar* um novo cache local ali (a
+    # gravação em app/services/ibge_api.py também é protegida por try/except).
+    pass
 
 # ---------------------------------------------------------------------------
 # APIs do IBGE
