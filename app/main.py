@@ -24,7 +24,6 @@ from app.components.sidebar import render_sidebar
 from app.config.settings import CSS_PATH, FONTE_LABEL
 from app.services import data_processing as dp
 from app.services import ibge_api
-from app.utils.formatting import format_brl
 from app.utils.geo import load_uf_geojson
 
 logging.basicConfig(level=logging.INFO)
@@ -69,7 +68,7 @@ def render_header() -> None:
     st.markdown(
         """
         <div class="hero-section">
-            <div class="app-title">SALÁRIO MÉDIO</div>
+            <div class="app-title">SALÁRIOMÉDIO</div>
             <div class="app-subtitle">DA POPULAÇÃO POR ESTADO NO <span class="highlight">BRASIL</span></div>
             <div class="hero-badge">📊 Dados PNAD Contínua · IBGE · Atualizado via API SIDRA</div>
         </div>
@@ -95,18 +94,6 @@ def render_legend() -> None:
         <div class="legend-box">
             <b>Renda Média Mensal</b><br><br>
             {items_html}
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
-def render_media_brasil_card(media_brasil: float | None) -> None:
-    st.markdown(
-        f"""
-        <div class="media-brasil-card">
-            <div class="label">Média Brasil</div>
-            <div class="value">{format_brl(media_brasil)}</div>
         </div>
         """,
         unsafe_allow_html=True,
@@ -153,8 +140,6 @@ def render_mapa_tab(filters: dict) -> None:
 
     with col_side:
         render_legend()
-        st.write("")
-        render_media_brasil_card(summary["media_brasil"])
 
     with st.expander("📋 Ver tabela completa de dados por estado"):
         st.dataframe(

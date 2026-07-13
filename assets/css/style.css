@@ -153,31 +153,6 @@
 }
 
 /* --------------------------------------------------------------------
-   Card "Média Brasil" em destaque, ao lado da legenda
-   -------------------------------------------------------------------- */
-.media-brasil-card {
-    border: 2px solid var(--accent-strong);
-    border-radius: 16px;
-    padding: 1rem 1.2rem;
-    text-align: center;
-    background: linear-gradient(160deg, rgba(59,140,242,0.14) 0%, var(--bg-card) 100%);
-    box-shadow: 0 0 0 1px var(--accent-glow);
-}
-.media-brasil-card .label {
-    font-weight: 800;
-    color: var(--text-muted);
-    font-size: 0.85rem;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-}
-.media-brasil-card .value {
-    font-weight: 900;
-    color: var(--accent);
-    font-size: 1.7rem;
-    margin-top: 0.2rem;
-}
-
-/* --------------------------------------------------------------------
    Abas (tabs)
    -------------------------------------------------------------------- */
 [data-testid="stTabs"] button {
