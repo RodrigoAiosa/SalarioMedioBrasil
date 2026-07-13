@@ -45,8 +45,37 @@ def _fmt_pct(value: float | None) -> str:
     return f"{sinal}{value:.2f}%".replace(".", ",")
 
 
+def _fmt_pct_com_seta(value: float | None) -> str:
+    """Formata a variação percentual com seta: ▲ para positivo, ▼ para negativo."""
+    if value is None or pd.isna(value):
+        return "—"
+    if value > 0:
+        seta = "▲"
+        sinal = "+"
+    elif value < 0:
+        seta = "▼"
+        sinal = ""
+    else:
+        seta = "▬"
+        sinal = ""
+    texto = f"{sinal}{value:.2f}%".replace(".", ",")
+    return f"{seta} {texto}"
+
+
+def _cor_pct(value: float | None) -> str:
+    """Retorna o CSS de cor da célula: azul para positivo, vermelho para negativo."""
+    if value is None or pd.isna(value):
+        return "color: #9FB0CC"
+    if value > 0:
+        return "color: #3B8CF2; font-weight: 700"
+    if value < 0:
+        return "color: #F87171; font-weight: 700"
+    return "color: #9FB0CC"
+
+
 def render_historico_tabela(df: pd.DataFrame) -> None:
-    """Renderiza a tabela de Período x Rendimento x %MoM(QoQ) x %YoY."""
+    """Renderiza a tabela de Período x Rendimento x %MoM(QoQ) x %YoY, com
+    setas coloridas indicando o sentido da variação (▲ azul = alta, ▼ vermelho = queda)."""
     tabela = df[["periodo_label", "rendimento_medio", "var_mom", "var_yoy"]].copy()
     tabela = tabela.iloc[::-1]  # período mais recente primeiro
     tabela = tabela.rename(
@@ -58,15 +87,24 @@ def render_historico_tabela(df: pd.DataFrame) -> None:
         }
     )
 
+    colunas_variacao = ["% QoQ (trim. anterior)", "% YoY (mesmo trim. ano anterior)"]
+
+    tabela_estilizada = (
+        tabela.style.format(
+            {
+                "Rendimento Médio": format_brl,
+                "% QoQ (trim. anterior)": _fmt_pct_com_seta,
+                "% YoY (mesmo trim. ano anterior)": _fmt_pct_com_seta,
+            }
+        ).map(_cor_pct, subset=colunas_variacao)
+    )
+
     st.dataframe(
-        tabela,
+        tabela_estilizada,
         use_container_width=True,
         hide_index=True,
         column_config={
             "Período (MêsAno)": st.column_config.TextColumn(width="small"),
-            "Rendimento Médio": st.column_config.NumberColumn(format="R$ %.2f"),
-            "% QoQ (trim. anterior)": st.column_config.NumberColumn(format="%.2f%%"),
-            "% YoY (mesmo trim. ano anterior)": st.column_config.NumberColumn(format="%.2f%%"),
         },
     )
 
