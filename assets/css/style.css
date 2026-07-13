@@ -153,6 +153,34 @@
 }
 
 /* --------------------------------------------------------------------
+   Cards compactos da aba Histórico (texto menor, sem truncar)
+   -------------------------------------------------------------------- */
+.historico-card {
+    background: linear-gradient(160deg, var(--bg-card) 0%, var(--bg-elevated) 100%);
+    border: 1px solid var(--border-soft);
+    border-radius: 14px;
+    padding: 0.95rem 1.1rem;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.22);
+    height: 100%;
+}
+.historico-card .historico-card-label {
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-size: 0.68rem;
+    letter-spacing: 0.3px;
+    line-height: 1.3;
+    white-space: normal;
+    margin-bottom: 0.35rem;
+}
+.historico-card .historico-card-value {
+    color: var(--accent);
+    font-weight: 800;
+    font-size: 1.45rem;
+    line-height: 1.2;
+}
+
+/* --------------------------------------------------------------------
    Abas (tabs)
    -------------------------------------------------------------------- */
 [data-testid="stTabs"] button {

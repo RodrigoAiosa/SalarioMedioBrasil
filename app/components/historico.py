@@ -71,6 +71,15 @@ def render_historico_tabela(df: pd.DataFrame) -> None:
     )
 
 
+def _render_card(label: str, value: str) -> str:
+    return (
+        f'<div class="historico-card">'
+        f'<div class="historico-card-label">{label}</div>'
+        f'<div class="historico-card-value">{value}</div>'
+        f"</div>"
+    )
+
+
 def render_historico_tab(df_historico_filtrado: pd.DataFrame, anos_selecionados: int) -> None:
     """Monta a aba completa de Histórico: cards de variação recente, gráfico e tabela."""
     if df_historico_filtrado.empty:
@@ -86,12 +95,22 @@ def render_historico_tab(df_historico_filtrado: pd.DataFrame, anos_selecionados:
 
     col1, col2, col3 = st.columns(3)
     with col1:
-        st.metric("Rendimento médio (último período)", format_brl(ultimo["rendimento_medio"]))
+        st.markdown(
+            _render_card("Rendimento médio (último período)", format_brl(ultimo["rendimento_medio"])),
+            unsafe_allow_html=True,
+        )
     with col2:
-        st.metric("Variação QoQ (trimestre anterior)", _fmt_pct(ultimo["var_mom"]))
+        st.markdown(
+            _render_card("Variação QoQ (trimestre anterior)", _fmt_pct(ultimo["var_mom"])),
+            unsafe_allow_html=True,
+        )
     with col3:
-        st.metric("Variação YoY (mesmo trimestre, ano anterior)", _fmt_pct(ultimo["var_yoy"]))
+        st.markdown(
+            _render_card("Variação YoY (mesmo trimestre, ano anterior)", _fmt_pct(ultimo["var_yoy"])),
+            unsafe_allow_html=True,
+        )
 
+    st.write("")
     st.plotly_chart(render_historico_chart(df_historico_filtrado), use_container_width=True, config={"displayModeBar": False})
 
     st.markdown("##### 📋 Tabela detalhada por período")
