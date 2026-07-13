@@ -69,7 +69,7 @@ def render_header() -> None:
     st.markdown(
         """
         <div class="hero-section">
-            <div class="app-title">SALÁRIOMÉDIO</div>
+            <div class="app-title">SALÁRIO MÉDIO</div>
             <div class="app-subtitle">DA POPULAÇÃO POR ESTADO NO <span class="highlight">BRASIL</span></div>
             <div class="hero-badge">📊 Dados PNAD Contínua · IBGE · Atualizado via API SIDRA</div>
         </div>
