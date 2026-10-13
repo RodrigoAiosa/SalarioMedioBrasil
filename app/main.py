@@ -25,6 +25,7 @@ from app.config.settings import CSS_PATH, FONTE_LABEL, periodo_para_ano
 from app.services import data_processing as dp
 from app.services import ibge_api
 from app.utils.geo import load_uf_geojson
+from esconder_selo import esconder_selo_streamlit
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -35,6 +36,7 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
 )
+esconder_selo_streamlit()  # oculta os controles do Streamlit Cloud
 
 
 def _inject_css() -> None:
