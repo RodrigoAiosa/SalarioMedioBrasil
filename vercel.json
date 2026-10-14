@@ -4,12 +4,22 @@
   "buildCommand": "",
   "installCommand": "",
   "functions": {
-    "api/sidra.js": { "maxDuration": 30 }
+    "api/sidra.js": {
+      "maxDuration": 30
+    }
   },
   "headers": [
     {
       "source": "/data/(.*)",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=86400" }]
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400"
+        }
+      ]
     }
+  ],
+  "regions": [
+    "gru1"
   ]
 }
