@@ -27,7 +27,10 @@ module.exports = async (req, res) => {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), 15000);
       const resp = await fetch(BASE + path.split("/").map(encodeURIComponent).join("/"), {
-        headers: { Accept: "application/json" },
+        headers: {
+          Accept: "application/json",
+          "User-Agent": "Mozilla/5.0 (compatible; SalarioMedio/1.0; +https://salariomediobrasil.vercel.app)",
+        },
         signal: controller.signal,
       });
       clearTimeout(timer);
