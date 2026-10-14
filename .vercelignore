@@ -1,0 +1,11 @@
+# O app Streamlit (Python) não roda na Vercel; lá publicamos só o index.html,
+# os dados de data/ e a função api/sidra.js.
+app/
+scripts/
+tests/
+assets/
+requirements.txt
+Dockerfile
+docker-compose.yml
+.streamlit/
+data/cache/brasil_uf.geojson

@@ -1,0 +1,465 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Salário Médio por Estado – Brasil</title>
+<meta name="description" content="Rendimento médio mensal da população ocupada em cada estado do Brasil, com os setores que mais pagam. Dados da PNAD Contínua (IBGE) via API SIDRA.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💰</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;800;900&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.35.2/plotly-basic.min.js"></script>
+<style>
+/* Tema escuro fixo, como no app original (visual de landing page). */
+:root {
+  --bg: #0b1220;
+  --bg-2: #111c33;
+  --card: #141f38;
+  --line: rgba(59, 140, 242, .18);
+  --line-2: rgba(159, 176, 204, .14);
+  --ink: #f4f8ff;
+  --muted: #9fb0cc;
+  --accent: #3b8cf2;
+  --accent-2: #1e6fd9;
+  --pos: #3b8cf2;
+  --neg: #f87171;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  font: 400 15px/1.55 "Archivo", system-ui, sans-serif; color: var(--ink);
+  background: radial-gradient(circle at 15% 0%, #142544 0, var(--bg) 900px) no-repeat, var(--bg);
+  min-height: 100vh;
+}
+.wrap { max-width: 1280px; margin: 0 auto; padding: 0 16px; }
+.hero { padding: 44px 0 22px; }
+.title { font-weight: 900; font-size: clamp(36px, 7vw, 64px); line-height: 1; letter-spacing: -.03em; margin: 0; }
+.subtitle { font-weight: 700; font-size: clamp(14px, 2vw, 18px); letter-spacing: .04em; text-transform: uppercase; color: var(--muted); margin: 8px 0 0; }
+.subtitle b { color: var(--accent); font-weight: 800; }
+.pill { display: inline-flex; align-items: center; gap: 8px; margin-top: 16px; padding: 6px 14px; border-radius: 99px; background: rgba(59,140,242,.1); border: 1px solid var(--line); color: var(--muted); font-size: 13px; }
+.pill .dot { width: 8px; height: 8px; border-radius: 50%; background: #34d399; box-shadow: 0 0 0 4px rgba(52,211,153,.18); }
+.pill.cache .dot { background: #fbbf24; box-shadow: 0 0 0 4px rgba(251,191,36,.18); }
+
+.bar { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: end; justify-content: space-between; border-bottom: 1px solid var(--line-2); margin-bottom: 22px; }
+.tabs { display: flex; gap: 4px; }
+.tab { appearance: none; background: none; border: 0; border-bottom: 2px solid transparent; color: var(--muted); font: 600 15px "Archivo", sans-serif; padding: 12px 14px; cursor: pointer; margin-bottom: -1px; }
+.tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+.tab:focus-visible, select:focus-visible, .chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+.filters { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; padding-bottom: 10px; }
+.filters label { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+select { font: 500 14px "Archivo", sans-serif; color: var(--ink); background: var(--bg-2); border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; min-height: 36px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { appearance: none; font: 500 13px "Archivo", sans-serif; color: var(--muted); background: transparent; border: 1px solid var(--line); border-radius: 99px; padding: 5px 12px; cursor: pointer; }
+.chip[aria-pressed="true"] { color: #fff; background: var(--accent-2); border-color: var(--accent-2); }
+
+.cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.card { background: linear-gradient(180deg, rgba(20,31,56,.9), rgba(17,28,51,.9)); border: 1px solid var(--line); border-radius: 16px; padding: 18px 20px; box-shadow: 0 0 0 1px rgba(255,255,255,.02), 0 12px 40px -20px var(--accent-2); }
+.card .k { color: var(--muted); font-size: 13px; }
+.card .v { font-weight: 800; font-size: clamp(24px, 3vw, 32px); letter-spacing: -.01em; font-variant-numeric: tabular-nums; margin-top: 4px; }
+.card .s { color: var(--muted); font-size: 12px; }
+.v.pos { color: var(--pos); } .v.neg { color: var(--neg); }
+
+.grid { display: grid; grid-template-columns: minmax(0, 3fr) minmax(260px, 1fr); gap: 18px; margin-top: 18px; }
+.panel { background: rgba(17,28,51,.55); border: 1px solid var(--line-2); border-radius: 16px; padding: 16px; }
+.panel h3 { font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin: 0 0 12px; font-weight: 600; }
+#map { width: 100%; height: auto; display: block; }
+#map path { stroke: var(--bg); stroke-width: .8; cursor: pointer; transition: opacity .15s; }
+#map path.dim { opacity: .14; }
+#map path:hover, #map path.hl { stroke: #fff; stroke-width: 1.6; }
+#map text { font: 600 10px "Archivo", sans-serif; fill: #0b1220; pointer-events: none; text-anchor: middle; dominant-baseline: middle; }
+#map text.light { fill: #f4f8ff; }
+.hint { color: var(--muted); font-size: 12px; margin: 8px 0 0; }
+
+.legend .grad { height: 12px; border-radius: 99px; background: linear-gradient(90deg, #dcebfb, #a9cff3, #5fa3e8, #1e6fd9, #0b3c82); }
+.legend .ends { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-top: 6px; font-variant-numeric: tabular-nums; }
+.rank { list-style: none; padding: 0; margin: 16px 0 0; display: grid; gap: 2px; max-height: 470px; overflow: auto; }
+.rank li { display: grid; grid-template-columns: 22px 34px 1fr auto; gap: 8px; align-items: center; padding: 6px 8px; border-radius: 8px; font-size: 13px; cursor: default; }
+.rank li:hover, .rank li.hl { background: rgba(59,140,242,.12); }
+.rank li.dim { opacity: .35; }
+.rank .n { color: var(--muted); font-size: 11px; }
+.rank .uf { font-weight: 700; }
+.rank .bar-i { height: 6px; border-radius: 99px; background: var(--accent); opacity: .7; }
+.rank .val { font-variant-numeric: tabular-nums; color: var(--ink); }
+
+.tip { position: fixed; z-index: 10; pointer-events: none; background: #111c33; border: 1px solid var(--accent-2); color: var(--ink); border-radius: 10px; padding: 10px 12px; font-size: 13px; max-width: 320px; box-shadow: 0 12px 30px rgba(0,0,0,.4); opacity: 0; transition: opacity .1s; }
+.tip b { font-weight: 700; }
+.tip ol { margin: 4px 0 0; padding-left: 18px; }
+.tip .muted { color: var(--muted); }
+
+details { margin-top: 18px; }
+summary { cursor: pointer; color: var(--muted); font-weight: 500; padding: 6px 0; }
+.table-wrap { overflow: auto; border: 1px solid var(--line-2); border-radius: 12px; margin-top: 8px; max-height: 520px; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+th, td { padding: 9px 12px; border-bottom: 1px solid var(--line-2); text-align: left; white-space: nowrap; }
+th { position: sticky; top: 0; background: var(--bg-2); color: var(--muted); font-weight: 600; }
+td.num, th.num { text-align: right; }
+td.pos { color: var(--pos); font-weight: 700; } td.neg { color: var(--neg); font-weight: 700; } td.zero { color: var(--muted); }
+
+.chart { width: 100%; height: 360px; }
+h2 { font-size: 18px; font-weight: 700; margin: 22px 0 12px; }
+.note { color: var(--muted); font-size: 13px; }
+.loading { display: flex; gap: 10px; align-items: center; color: var(--muted); padding: 40px 0; }
+.spin { width: 16px; height: 16px; border: 2px solid var(--line); border-top-color: var(--accent); border-radius: 50%; animation: s .8s linear infinite; }
+@keyframes s { to { transform: rotate(360deg); } }
+.err { background: rgba(248,113,113,.1); border: 1px solid rgba(248,113,113,.3); border-radius: 12px; padding: 14px; }
+footer { color: var(--muted); font-size: 12px; padding: 40px 0 48px; }
+footer a { color: var(--muted); }
+[hidden] { display: none !important; }
+
+@media (max-width: 900px) { .grid { grid-template-columns: 1fr; } .rank { max-height: none; } }
+@media (max-width: 620px) { .cards { grid-template-columns: 1fr; } .chart { height: 300px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="hero">
+    <h1 class="title">SALÁRIO MÉDIO</h1>
+    <p class="subtitle">da população por estado no <b>Brasil</b></p>
+    <div class="pill" id="fonte"><span class="dot"></span><span id="fonteTxt">Dados PNAD Contínua · IBGE · API SIDRA</span></div>
+  </header>
+
+  <div class="bar">
+    <nav class="tabs" role="tablist">
+      <button class="tab" role="tab" id="t-mapa" aria-selected="true" aria-controls="p-mapa">🗺️ Mapa por estado</button>
+      <button class="tab" role="tab" id="t-hist" aria-selected="false" aria-controls="p-hist">📈 Histórico (QoQ / YoY)</button>
+    </nav>
+    <div class="filters" id="f-mapa">
+      <label>Ano de referência <select id="ano"></select></label>
+      <div class="chips" id="regioes" role="group" aria-label="Filtrar por região"></div>
+    </div>
+    <div class="filters" id="f-hist" hidden>
+      <label>Janela do histórico <select id="janela"></select></label>
+    </div>
+  </div>
+
+  <section id="p-mapa" role="tabpanel" aria-labelledby="t-mapa">
+    <div id="mapaConteudo"><div class="loading"><div class="spin"></div>Carregando dados da PNAD Contínua…</div></div>
+  </section>
+
+  <section id="p-hist" role="tabpanel" aria-labelledby="t-hist" hidden>
+    <div id="histConteudo"><div class="loading"><div class="spin"></div>Carregando série histórica…</div></div>
+  </section>
+
+  <footer>
+    Fonte: <a href="https://sidra.ibge.gov.br/tabela/6407" target="_blank" rel="noopener">PNAD Contínua (IBGE) — Tabela 6407</a> e
+    <a href="https://sidra.ibge.gov.br/tabela/5436" target="_blank" rel="noopener">Tabela 5436</a>, via API SIDRA.
+    Rendimento médio mensal real de todos os trabalhos, das pessoas de 14 anos ou mais ocupadas na semana de referência.
+    · <a href="https://github.com/RodrigoAiosa/SalarioMedioBrasil" target="_blank" rel="noopener">Código no GitHub</a>
+  </footer>
+</div>
+<div class="tip" id="tip" role="tooltip"></div>
+
+<script>
+(() => {
+  "use strict";
+
+  const UF = {
+    RO: ["Rondônia", 11, "Norte"], AC: ["Acre", 12, "Norte"], AM: ["Amazonas", 13, "Norte"], RR: ["Roraima", 14, "Norte"],
+    PA: ["Pará", 15, "Norte"], AP: ["Amapá", 16, "Norte"], TO: ["Tocantins", 17, "Norte"], MA: ["Maranhão", 21, "Nordeste"],
+    PI: ["Piauí", 22, "Nordeste"], CE: ["Ceará", 23, "Nordeste"], RN: ["Rio Grande do Norte", 24, "Nordeste"], PB: ["Paraíba", 25, "Nordeste"],
+    PE: ["Pernambuco", 26, "Nordeste"], AL: ["Alagoas", 27, "Nordeste"], SE: ["Sergipe", 28, "Nordeste"], BA: ["Bahia", 29, "Nordeste"],
+    MG: ["Minas Gerais", 31, "Sudeste"], ES: ["Espírito Santo", 32, "Sudeste"], RJ: ["Rio de Janeiro", 33, "Sudeste"], SP: ["São Paulo", 35, "Sudeste"],
+    PR: ["Paraná", 41, "Sul"], SC: ["Santa Catarina", 42, "Sul"], RS: ["Rio Grande do Sul", 43, "Sul"], MS: ["Mato Grosso do Sul", 50, "Centro-Oeste"],
+    MT: ["Mato Grosso", 51, "Centro-Oeste"], GO: ["Goiás", 52, "Centro-Oeste"], DF: ["Distrito Federal", 53, "Centro-Oeste"],
+  };
+  const COD_UF = Object.fromEntries(Object.entries(UF).map(([s, v]) => [v[1], s]));
+  const REGIOES = ["Norte", "Nordeste", "Centro-Oeste", "Sudeste", "Sul"];
+  const ANO_ATUAL = new Date().getFullYear();
+  const JANELAS = [1, 2, 3, 5, 10];
+  const MESES = ["", "Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+  const brl = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+  const brl0 = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+  const pct = (v) => (v == null || isNaN(v) ? "—" : `${v > 0 ? "+" : ""}${v.toFixed(2).replace(".", ",")}%`);
+  const seta = (v) => (v == null || isNaN(v) ? "—" : `${v > 0 ? "▲" : v < 0 ? "▼" : "▬"} ${pct(v)}`);
+  const cls = (v) => (v == null || isNaN(v) ? "zero" : v > 0 ? "pos" : v < 0 ? "neg" : "zero");
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const $ = (id) => document.getElementById(id);
+
+  // ------------------------------------------------------------------ dados
+  // Tenta a API SIDRA ao vivo (via /api/sidra na Vercel); se falhar, usa o
+  // cache versionado em data/cache/, igual ao app Streamlit original.
+  const fontes = new Set();
+  let usarDireto = false;
+  async function sidra(path, cacheName) {
+    try {
+      let r = null;
+      if (!usarDireto) {
+        r = await fetch(`/api/sidra?path=${encodeURIComponent(path)}`);
+        if (r.status === 404 || r.status === 405) { usarDireto = true; r = null; }
+      }
+      if (!r) r = await fetch(`https://apisidra.ibge.gov.br${path}`);
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const d = await r.json();
+      if (!Array.isArray(d) || d.length < 2) throw new Error("resposta vazia");
+      fontes.add("api");
+      return d;
+    } catch (e) {
+      const r = await fetch(`data/cache/${cacheName}.json`);
+      if (!r.ok) throw new Error(`Sem dados ao vivo nem cache local (${e.message})`);
+      fontes.add("cache");
+      return r.json();
+    } finally { atualizarFonte(); }
+  }
+  function atualizarFonte() {
+    const so = fontes.has("cache") && !fontes.has("api");
+    const mix = fontes.has("cache") && fontes.has("api");
+    $("fonte").classList.toggle("cache", fontes.has("cache"));
+    $("fonteTxt").textContent = so ? "Dados PNAD Contínua · IBGE · cópia local (API SIDRA indisponível)"
+      : mix ? "Dados PNAD Contínua · IBGE · API SIDRA ao vivo + cópia local"
+      : "Dados PNAD Contínua · IBGE · ao vivo via API SIDRA";
+  }
+  const semCabecalho = (raw) => (raw.length && (raw[0].D1C == null || raw[0].D1C === "Unidade da Federação (Código)" || raw[0].V === "Valor") ? raw.slice(1) : raw);
+  const num = (v) => { const n = parseFloat(v); return isFinite(n) ? n : null; };
+  const encurtar = (s, max = 42) => (s.length <= max ? s : s.slice(0, max - 1).replace(/\s+\S*$/, "").replace(/,$/, "") + "…");
+
+  const cacheAno = new Map();
+  async function dadosAno(ano) {
+    if (cacheAno.has(ano)) return cacheAno.get(ano);
+    const per = ano === ANO_ATUAL ? "last" : `${ano}04`;
+    const suf = per === "last" ? "" : `_${per}`;
+    const [rUf, rSet] = await Promise.all([
+      sidra(`/values/t/6407/n3/all/v/5933/p/${per}/c58/allxt`, `rendimento_uf${suf}`),
+      sidra(`/values/t/5436/n3/all/v/5929/p/${per}/c11913/all`, `rendimento_setor_uf${suf}`).catch(() => []),
+    ]);
+    const linhas = semCabecalho(rUf).map((r) => {
+      const sigla = COD_UF[+r.D1C], v = num(r.V);
+      return sigla && v != null ? { sigla, nome: UF[sigla][0], regiao: UF[sigla][2], valor: v, periodo: (r.D3N || "").replace(/\s*\(.*\)\s*$/, "") } : null;
+    }).filter(Boolean).sort((a, b) => b.valor - a.valor);
+
+    const top = {};
+    semCabecalho(rSet).forEach((r) => {
+      const sigla = COD_UF[+r.D1C], v = num(r.V);
+      if (!sigla || v == null || !r.D4N || /^total$/i.test(r.D4N)) return;
+      (top[sigla] = top[sigla] || []).push({ setor: encurtar(r.D4N), valor: v });
+    });
+    Object.values(top).forEach((l) => l.sort((a, b) => b.valor - a.valor).splice(3));
+    const res = { linhas, top };
+    cacheAno.set(ano, res);
+    return res;
+  }
+
+  let historico = null;
+  async function dadosHistorico() {
+    if (historico) return historico;
+    const raw = await sidra("/values/t/6407/n1/1/v/5933/p/all/c58/allxt", "historico_rendimento_brasil");
+    const serie = semCabecalho(raw).map((r) => {
+      const c = String(r.D3C || ""), v = num(r.V);
+      if (c.length !== 6 || v == null) return null;
+      const ano = +c.slice(0, 4), tri = +c.slice(4);
+      if (tri < 1 || tri > 4) return null;
+      const mes = tri * 3;
+      return { ano, tri, mes, data: new Date(Date.UTC(ano, mes - 1, 1)), label: `${MESES[mes]}/${ano}`, valor: v };
+    }).filter(Boolean).sort((a, b) => a.data - b.data);
+    serie.forEach((d, i) => {
+      d.qoq = i >= 1 ? (d.valor / serie[i - 1].valor - 1) * 100 : null;
+      d.yoy = i >= 4 ? (d.valor / serie[i - 4].valor - 1) * 100 : null;
+    });
+    historico = serie;
+    return serie;
+  }
+
+  // ------------------------------------------------------------------ mapa
+  let geo = null;
+  const regioesAtivas = new Set();
+  const cores = ["#dcebfb", "#a9cff3", "#5fa3e8", "#1e6fd9", "#0b3c82"];
+  const tip = $("tip");
+
+  function posTip(e) {
+    const w = tip.offsetWidth, h = tip.offsetHeight;
+    let x = e.clientX + 14, y = e.clientY + 14;
+    if (x + w > innerWidth - 8) x = e.clientX - w - 14;
+    if (y + h > innerHeight - 8) y = e.clientY - h - 14;
+    tip.style.left = `${Math.max(8, x)}px`; tip.style.top = `${Math.max(8, y)}px`;
+  }
+  function htmlTip(d, top) {
+    const s = top[d.sigla] || [];
+    return `<b>${esc(d.nome)} (${d.sigla})</b><br>Rendimento médio: <b>${brl.format(d.valor)}</b>
+      <div style="margin-top:8px"><b>Top 3 setores (maior média salarial):</b>
+      ${s.length ? `<ol>${s.map((x) => `<li>${esc(x.setor)} — ${brl.format(x.valor)}</li>`).join("")}</ol>` : `<div class="muted">Sem dados setoriais disponíveis</div>`}</div>`;
+  }
+
+  // d3-geo espera anéis no sentido horário; se a área sair maior que meio
+  // globo, o polígono está invertido e é corrigido aqui.
+  function corrigirSentido(g) {
+    g.features.forEach((f) => {
+      if (d3.geoArea(f) > 2 * Math.PI) {
+        const geom = f.geometry;
+        if (geom.type === "Polygon") geom.coordinates.forEach((r) => r.reverse());
+        if (geom.type === "MultiPolygon") geom.coordinates.forEach((p) => p.forEach((r) => r.reverse()));
+      }
+    });
+    return g;
+  }
+
+  async function renderMapa() {
+    const ano = +$("ano").value;
+    const alvo = $("mapaConteudo");
+    alvo.innerHTML = `<div class="loading"><div class="spin"></div>Carregando dados da PNAD Contínua (IBGE) para ${ano}…</div>`;
+    let dados;
+    try {
+      [dados, geo] = await Promise.all([dadosAno(ano), geo || fetch("data/web/brasil_uf.min.geojson").then((r) => r.json()).then(corrigirSentido)]);
+    } catch (e) {
+      alvo.innerHTML = `<div class="err">Não foi possível carregar os dados do IBGE para ${ano}. ${esc(e.message)}</div>`;
+      return;
+    }
+    if (+$("ano").value !== ano) return;
+    const { linhas, top } = dados;
+    if (!linhas.length) { alvo.innerHTML = `<div class="err">Nenhum dado de rendimento por UF foi retornado para ${ano}.</div>`; return; }
+
+    const porUf = Object.fromEntries(linhas.map((d) => [d.sigla, d]));
+    const media = d3.mean(linhas, (d) => d.valor);
+    const maior = linhas[0], menor = linhas[linhas.length - 1];
+    const min = menor.valor, max = maior.valor;
+    const cor = d3.scaleLinear().domain(cores.map((_, i) => min + (max - min) * i / (cores.length - 1))).range(cores).interpolate(d3.interpolateRgb);
+    const periodo = linhas[0].periodo;
+    const rotulo = ano === ANO_ATUAL ? `trimestre mais recente disponível${periodo ? ` (${periodo})` : ""}` : (periodo || "4º trimestre");
+
+    alvo.innerHTML = `
+      <p class="note" style="margin:0 0 14px">📅 Exibindo dados de <b style="color:var(--ink)">${ano}</b> — ${esc(rotulo)}</p>
+      <div class="cards">
+        <div class="card"><div class="k">🇧🇷 Média Brasil (média das UFs)</div><div class="v">${brl.format(media)}</div></div>
+        <div class="card"><div class="k">🔼 Maior média — ${maior.sigla}</div><div class="v">${brl.format(maior.valor)}</div><div class="s">${esc(maior.nome)}</div></div>
+        <div class="card"><div class="k">🔽 Menor média — ${menor.sigla}</div><div class="v">${brl.format(menor.valor)}</div><div class="s">${esc(menor.nome)}</div></div>
+      </div>
+      <div class="grid">
+        <div class="panel">
+          <svg id="map" role="img" aria-label="Mapa do Brasil colorido pelo rendimento médio de cada estado"></svg>
+          <p class="hint">💡 Passe o mouse (ou toque) sobre um estado para ver o Top 3 de setores com maior média salarial.</p>
+        </div>
+        <div class="panel legend">
+          <h3>Renda média mensal</h3>
+          <div class="grad"></div>
+          <div class="ends"><span>${brl0.format(min)}</span><span>${brl0.format(max)}</span></div>
+          <ol class="rank" id="rank">${linhas.map((d, i) => `
+            <li data-uf="${d.sigla}"><span class="n">${i + 1}</span><span class="uf">${d.sigla}</span>
+            <span class="bar-i" style="width:${Math.max(8, (d.valor / max) * 100)}%;background:${cor(d.valor)}"></span>
+            <span class="val">${brl0.format(d.valor)}</span></li>`).join("")}</ol>
+        </div>
+      </div>
+      <details>
+        <summary>📋 Ver tabela completa de dados por estado</summary>
+        <div class="table-wrap"><table>
+          <thead><tr><th>UF</th><th>Estado</th><th>Região</th><th class="num">Rendimento médio</th><th>Setor que mais paga</th></tr></thead>
+          <tbody>${linhas.map((d) => `<tr><td>${d.sigla}</td><td>${esc(d.nome)}</td><td>${d.regiao}</td><td class="num">${brl.format(d.valor)}</td><td>${top[d.sigla]?.[0] ? `${esc(top[d.sigla][0].setor)} (${brl0.format(top[d.sigla][0].valor)})` : "—"}</td></tr>`).join("")}</tbody>
+        </table></div>
+      </details>`;
+
+    // Desenho do mapa com d3-geo
+    const W = 800, H = 760;
+    const proj = d3.geoMercator().fitSize([W, H], geo);
+    const path = d3.geoPath(proj);
+    const svg = d3.select("#map").attr("viewBox", `0 0 ${W} ${H}`);
+    const pequenos = new Set(["DF", "SE", "AL", "RN", "PB", "ES", "RJ"]);
+
+    svg.append("g").selectAll("path").data(geo.features).join("path")
+      .attr("d", path)
+      .attr("data-uf", (f) => f.properties.SIGLA)
+      .attr("fill", (f) => (porUf[f.properties.SIGLA] ? cor(porUf[f.properties.SIGLA].valor) : "#2a3550"))
+      .on("pointerenter pointermove", (e, f) => {
+        const d = porUf[f.properties.SIGLA]; if (!d) return;
+        tip.innerHTML = htmlTip(d, top); tip.style.opacity = 1; posTip(e); destacar(d.sigla);
+      })
+      .on("pointerleave", () => { tip.style.opacity = 0; destacar(null); });
+
+    svg.append("g").selectAll("text").data(geo.features.filter((f) => !pequenos.has(f.properties.SIGLA))).join("text")
+      .attr("transform", (f) => `translate(${path.centroid(f)})`)
+      .attr("class", (f) => (porUf[f.properties.SIGLA] && porUf[f.properties.SIGLA].valor > min + (max - min) * .55 ? "light" : ""))
+      .text((f) => f.properties.SIGLA);
+
+    document.querySelectorAll("#rank li").forEach((li) => {
+      li.addEventListener("pointerenter", () => destacar(li.dataset.uf));
+      li.addEventListener("pointerleave", () => destacar(null));
+    });
+    aplicarRegioes();
+  }
+
+  function destacar(uf) {
+    document.querySelectorAll("#map path").forEach((p) => p.classList.toggle("hl", p.dataset.uf === uf));
+    document.querySelectorAll("#rank li").forEach((li) => li.classList.toggle("hl", li.dataset.uf === uf));
+  }
+  function aplicarRegioes() {
+    const ativo = (uf) => !regioesAtivas.size || regioesAtivas.has(UF[uf]?.[2]);
+    document.querySelectorAll("#map path").forEach((p) => p.classList.toggle("dim", !ativo(p.dataset.uf)));
+    document.querySelectorAll("#rank li").forEach((li) => li.classList.toggle("dim", !ativo(li.dataset.uf)));
+  }
+
+  // ------------------------------------------------------------- histórico
+  async function renderHistorico() {
+    const alvo = $("histConteudo");
+    let serie;
+    try { serie = await dadosHistorico(); }
+    catch (e) { alvo.innerHTML = `<div class="err">Não foi possível carregar a série histórica do IBGE. ${esc(e.message)}</div>`; return; }
+    if (!serie.length) { alvo.innerHTML = `<div class="err">Sem dados históricos disponíveis.</div>`; return; }
+
+    const anos = +$("janela").value;
+    const ultimo = serie[serie.length - 1];
+    const limite = new Date(ultimo.data); limite.setUTCFullYear(limite.getUTCFullYear() - anos);
+    const f = serie.filter((d) => d.data > limite);
+
+    alvo.innerHTML = `
+      <h2 style="margin-top:0">Evolução do rendimento médio nacional — últimos ${anos} ${anos === 1 ? "ano" : "anos"} (${f[0].label} a ${ultimo.label})</h2>
+      <div class="cards">
+        <div class="card"><div class="k">Rendimento médio (último período)</div><div class="v">${brl.format(ultimo.valor)}</div><div class="s">trimestre encerrado em ${ultimo.label}</div></div>
+        <div class="card"><div class="k">Variação QoQ (trimestre anterior)</div><div class="v ${cls(ultimo.qoq)}">${pct(ultimo.qoq)}</div></div>
+        <div class="card"><div class="k">Variação YoY (mesmo trimestre, ano anterior)</div><div class="v ${cls(ultimo.yoy)}">${pct(ultimo.yoy)}</div></div>
+      </div>
+      <div class="panel" style="margin-top:18px"><div id="gHist" class="chart"></div></div>
+      <h2>📋 Tabela detalhada por período</h2>
+      <p class="note">A PNAD Contínua divulga o rendimento por <b>trimestre</b>, não por mês. O período usa o último mês de cada trimestre; “% QoQ” compara com o trimestre anterior e “% YoY” com o mesmo trimestre do ano anterior.</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Período (MêsAno)</th><th class="num">Rendimento médio</th><th class="num">% QoQ (trim. anterior)</th><th class="num">% YoY (mesmo trim. ano anterior)</th></tr></thead>
+        <tbody>${f.slice().reverse().map((d) => `<tr><td>${d.label}</td><td class="num">${brl.format(d.valor)}</td><td class="num ${cls(d.qoq)}">${seta(d.qoq)}</td><td class="num ${cls(d.yoy)}">${seta(d.yoy)}</td></tr>`).join("")}</tbody>
+      </table></div>`;
+
+    const vmin = d3.min(f, (d) => d.valor), vmax = d3.max(f, (d) => d.valor), pad = (vmax - vmin) * .15 || 100;
+    Plotly.newPlot("gHist", [{
+      x: f.map((d) => d.data), y: f.map((d) => d.valor), customdata: f.map((d) => d.label),
+      mode: "lines+markers", line: { color: "#3b8cf2", width: 3, shape: "spline" }, marker: { size: 5, color: "#3b8cf2" },
+      fill: "tozeroy", fillcolor: "rgba(59,140,242,0.15)",
+      hovertemplate: "%{customdata}<br>Rendimento médio: <b>R$ %{y:,.2f}</b><extra></extra>",
+    }], {
+      margin: { l: 70, r: 10, t: 10, b: 40 }, paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)",
+      font: { family: "Archivo, sans-serif", size: 12, color: "#b8c4d9" }, separators: ",.",
+      xaxis: { showgrid: false, color: "#b8c4d9" },
+      yaxis: { showgrid: true, gridcolor: "rgba(184,196,217,0.12)", tickprefix: "R$ ", color: "#b8c4d9", range: [vmin - pad, vmax + pad] },
+      hovermode: "x unified", hoverlabel: { bgcolor: "#111c33", font: { color: "#e7eef9" }, bordercolor: "#1e6fd9" },
+    }, { responsive: true, displayModeBar: false });
+  }
+
+  // ------------------------------------------------------------------ início
+  for (let a = ANO_ATUAL; a >= 2015; a--) $("ano").add(new Option(a === ANO_ATUAL ? `${a} (mais recente)` : String(a), a));
+  JANELAS.forEach((n) => $("janela").add(new Option(`${n} ${n === 1 ? "ano" : "anos"}`, n)));
+  $("janela").value = 5;
+  $("regioes").innerHTML = REGIOES.map((r) => `<button class="chip" aria-pressed="false" data-r="${r}">${r}</button>`).join("");
+
+  $("ano").addEventListener("change", renderMapa);
+  $("janela").addEventListener("change", renderHistorico);
+  $("regioes").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-r]"); if (!b) return;
+    const on = b.getAttribute("aria-pressed") !== "true";
+    b.setAttribute("aria-pressed", on);
+    on ? regioesAtivas.add(b.dataset.r) : regioesAtivas.delete(b.dataset.r);
+    aplicarRegioes();
+  });
+
+  let histCarregado = false;
+  function aba(qual) {
+    const mapa = qual === "mapa";
+    $("t-mapa").setAttribute("aria-selected", mapa); $("t-hist").setAttribute("aria-selected", !mapa);
+    $("p-mapa").hidden = !mapa; $("p-hist").hidden = mapa;
+    $("f-mapa").hidden = !mapa; $("f-hist").hidden = mapa;
+    if (!mapa && !histCarregado) { histCarregado = true; renderHistorico(); }
+    if (!mapa) setTimeout(() => { const g = $("gHist"); if (g && g.data) Plotly.Plots.resize(g); }, 30);
+  }
+  $("t-mapa").onclick = () => aba("mapa");
+  $("t-hist").onclick = () => aba("hist");
+  document.addEventListener("scroll", () => { tip.style.opacity = 0; }, { passive: true });
+
+  renderMapa();
+})();
+</script>
+</body>
+</html>
